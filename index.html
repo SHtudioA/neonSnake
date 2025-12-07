@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEON SNAKE: STABLE MASTER</title>
+    <title>NEON SNAKE: DUAL CORE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;800&display=swap');
 
@@ -22,7 +22,6 @@
             z-index: 10;
         }
 
-        /* 아드레날린(위기) 효과 오버레이 */
         #adrenaline-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle, transparent 40%, rgba(255, 0, 0, 0.2) 90%);
@@ -130,12 +129,12 @@
         </div>
 
         <div id="start-screen" class="center-panel">
-            <h1>NEON<br>MASTERPIECE</h1>
+            <h1>NEON<br>DUAL CORE</h1>
             <p>
                 <span class="key-hint">←</span> <span class="key-hint">→</span> TURN <span style="color:#aaa">|</span> 
                 <span class="key-hint">↓</span> REPEAT TURN<br><br>
                 <span class="key-hint" style="color:#ffcc00; border-color:#ffcc00">↑ HOLD</span> HYPER DASH<br>
-                <span class="key-hint" style="color:#ff3366; border-color:#ff3366">⚠</span> REFLEX AUTO-ACTIVE
+                <span class="key-hint" style="color:#00f3ff; border-color:#00f3ff">◉ ◉</span> MULTI-TARGET ACTIVE
             </p>
             <button class="btn" id="btn-start">JACK IN</button>
         </div>
@@ -176,29 +175,22 @@
         class AudioEngine {
             constructor() {
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Adrenaline LowPass Filter
                 this.adrenalineFilter = this.ctx.createBiquadFilter();
                 this.adrenalineFilter.type = 'lowpass';
                 this.adrenalineFilter.frequency.value = 22000;
                 this.adrenalineFilter.Q.value = 1;
-
                 this.master = this.ctx.createGain();
                 this.master.gain.value = 0.5;
-                
                 this.compressor = this.ctx.createDynamicsCompressor();
                 this.compressor.connect(this.adrenalineFilter);
                 this.adrenalineFilter.connect(this.ctx.destination);
-
                 this.reverb = this.createReverb(2.0);
                 this.reverbGain = this.ctx.createGain();
                 this.reverbGain.gain.value = 0.3;
-
                 this.master.connect(this.compressor);
                 this.master.connect(this.reverb);
                 this.reverb.connect(this.reverbGain);
                 this.reverbGain.connect(this.adrenalineFilter);
-
                 this.isPlaying = false;
                 this.tempo = 128;
                 this.nextNoteTime = 0;
@@ -249,21 +241,17 @@
             playTick(t, beat) {
                 const step16 = beat % 16;
                 if(step16 % 4 === 0) this.synthKick(t);
-                
                 if(step16 % 4 === 2 || step16 % 4 === 3) {
                     const freq = this.dashIntensity ? 110 : (this.phase === 3 ? 65 : 55); 
                     this.synthBass(t, freq);
                 }
-                
                 if(this.phase >= 2) {
                     if(step16 === 4 || step16 === 12) this.synthSnare(t);
                 }
-
                 if(step16 % 2 === 0) {
                     if(this.dashIntensity || this.phase >= 2) this.synthHihat(t, step16 % 4 === 2 ? 0.1 : 0.05);
                     else if(step16 % 4 === 2) this.synthHihat(t, 0.05);
                 }
-                
                 const scale = [0, 3, 5, 7, 10]; 
                 const root = 440; 
                 const noteIdx = (beat * (this.phase === 3 ? 7 : 3)) % 5;
@@ -295,13 +283,14 @@
         const MAX_DASH_FUEL = 4.0;
         const DASH_CONSUMPTION = 0.5;
         const ADRENALINE_RANGE = 3; 
+        const FOOD_COUNT = 2; // [NEW] 2 targets active at once
         
         let scene, camera, renderer, composer, rgbShiftPass, filmPass;
         let snakeGroup, cityGroup, particles, gridHelper, wallLines;
         let snakeData = [];
         let direction = new THREE.Vector3(0, 0, -1);
         let inputQueue = [], lastTurnAction = null;
-        let foodMesh;
+        let foodMeshes = []; // [NEW] Array for food
         let gameState = { isPlaying: false, score: 0, speed: BASE_SPEED, dashFuel: 0, isDashing: false, phase: 0 };
         let lastTime = 0, moveTimer = 0, audioEngine;
         let currentThemeColor = new THREE.Color(PHASES[0].color);
@@ -401,33 +390,47 @@
             snakeData = [];
             for(let i=0; i<5; i++) addSnakePart(0, i);
             direction.set(0, 0, -1); inputQueue = []; lastTurnAction = null;
-            spawnFood(); moveTimer = 0; lastTime = performance.now();
+            
+            // [NEW] Clear and spawn multiple foods
+            foodMeshes.forEach(m => scene.remove(m));
+            foodMeshes = [];
+            for(let i=0; i<FOOD_COUNT; i++) spawnFood();
+
+            moveTimer = 0; lastTime = performance.now();
         }
 
         function addSnakePart(x, z) {
-            const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+            const geo = new THREE.BoxGeometry(0.85, 0.85, 0.85);
             const isHead = snakeData.length === 0;
             const mat = new THREE.MeshStandardMaterial({
                 color: isHead ? 0xffffff : currentThemeColor,
                 emissive: isHead ? 0xffffff : currentThemeColor,
-                emissiveIntensity: isHead ? 1.5 : 0.8, roughness: 0.2, metalness: 0.8
+                emissiveIntensity: isHead ? 1.1 : 0.5, 
+                roughness: 0.2, metalness: 0.8
             });
             const mesh = new THREE.Mesh(geo, mat); mesh.position.set(x, 0, z); snakeGroup.add(mesh);
-            if(isHead) { const light = new THREE.PointLight(currentThemeColor, 5, 40); light.position.y = 2; mesh.add(light); }
+            if(isHead) { 
+                const light = new THREE.PointLight(currentThemeColor, 3, 15); 
+                light.position.y = 2; mesh.add(light); 
+            }
             snakeData.push({ mesh, currX: x, currZ: z, prevX: x, prevZ: z });
         }
 
         function spawnFood() {
-            if(foodMesh) scene.remove(foodMesh);
             let valid = false, x, z;
             while(!valid) {
                 x = Math.floor(Math.random()*GRID_SIZE*2) - GRID_SIZE; z = Math.floor(Math.random()*GRID_SIZE*2) - GRID_SIZE;
-                valid = true; for(let p of snakeData) if(Math.round(p.currX)===x && Math.round(p.currZ)===z) valid=false;
+                valid = true; 
+                // Check snake
+                for(let p of snakeData) if(Math.round(p.currX)===x && Math.round(p.currZ)===z) valid=false;
+                // Check other foods
+                for(let f of foodMeshes) if(Math.round(f.position.x)===x && Math.round(f.position.z)===z) valid=false;
             }
             const geo = new THREE.OctahedronGeometry(0.6, 0);
             const mat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0xff5500, emissiveIntensity: 3.0 });
-            foodMesh = new THREE.Mesh(geo, mat); foodMesh.position.set(x, 0.5, z);
-            const light = new THREE.PointLight(0xff5500, 3, 10); foodMesh.add(light); scene.add(foodMesh);
+            const mesh = new THREE.Mesh(geo, mat); mesh.position.set(x, 0.5, z);
+            const light = new THREE.PointLight(0xff5500, 3, 10); mesh.add(light); scene.add(mesh);
+            foodMeshes.push(mesh); // [NEW] Add to array
             particles.explode(x, z, 0xffaa00, 5, 0.5);
         }
 
@@ -520,10 +523,11 @@
 
             updateCamera(progress, isBoosting, slowDelta);
             
-            if(foodMesh) {
-                foodMesh.rotation.y += slowDelta*4;
-                foodMesh.position.y = 0.5 + Math.sin(performance.now()*0.008)*0.2;
-            }
+            // [NEW] Update all foods
+            foodMeshes.forEach(mesh => {
+                mesh.rotation.y += slowDelta*4;
+                mesh.position.y = 0.5 + Math.sin(performance.now()*0.008)*0.2;
+            });
             particles.update(slowDelta);
         }
 
@@ -542,9 +546,19 @@
             if(Math.abs(nx) > GRID_SIZE || Math.abs(nz) > GRID_SIZE) { gameOver(); return; }
             for(let i=0; i<snakeData.length-1; i++) { if(snakeData[i].currX === nx && snakeData[i].currZ === nz) { gameOver(); return; } }
             for(let p of snakeData) { p.prevX = p.currX; p.prevZ = p.currZ; }
-            let ate = false;
-            if(foodMesh && Math.round(nx) === Math.round(foodMesh.position.x) && Math.round(nz) === Math.round(foodMesh.position.z)) {
-                ate = true; gameState.score += 10; updatePhase(gameState.score);
+            
+            // [NEW] Check Collision with ANY food
+            let eatenIndex = -1;
+            for(let i=0; i<foodMeshes.length; i++) {
+                const f = foodMeshes[i];
+                if(Math.round(nx) === Math.round(f.position.x) && Math.round(nz) === Math.round(f.position.z)) {
+                    eatenIndex = i;
+                    break;
+                }
+            }
+
+            if(eatenIndex !== -1) {
+                gameState.score += 10; updatePhase(gameState.score);
                 audioEngine.score = gameState.score; audioEngine.playSound('eat');
                 particles.explode(nx, nz, 0xffaa00, 20, 2);
                 if(gameState.dashFuel < MAX_DASH_FUEL) {
@@ -552,12 +566,18 @@
                     if(gameState.dashFuel > MAX_DASH_FUEL) gameState.dashFuel = MAX_DASH_FUEL;
                     updateDashUI();
                 }
-                updateScoreUI(); spawnFood();
-            }
-            if(ate) {
+                updateScoreUI(); 
+                
+                // [NEW] Remove eaten and spawn new
+                scene.remove(foodMeshes[eatenIndex]);
+                foodMeshes.splice(eatenIndex, 1);
+                spawnFood();
+
+                // Grow
                 const tail = snakeData[snakeData.length-1]; addSnakePart(tail.prevX, tail.prevZ);
                 const newTail = snakeData[snakeData.length-1]; newTail.prevX = tail.prevX; newTail.prevZ = tail.prevZ; newTail.currX = tail.prevX; newTail.currZ = tail.prevZ;
             }
+
             for(let i=snakeData.length-1; i>0; i--) { snakeData[i].currX = snakeData[i-1].currX; snakeData[i].currZ = snakeData[i-1].currZ; }
             head.currX = nx; head.currZ = nz;
         }
@@ -576,7 +596,6 @@
             lookPos.copy(head.position).add(direction.clone().multiplyScalar(15));
             if(isBoosting) { targetPos.x += (Math.random()-0.5)*0.2; targetPos.y += (Math.random()-0.5)*0.2; }
             
-            // Stable Camera (No Banking)
             camera.position.lerp(targetPos, 0.1);
             camera.lookAt(lookPos);
         }
