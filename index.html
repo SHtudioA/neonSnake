@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEON SNAKE: ULTIMATE</title>
+    <title>NEON SNAKE: STABLE MASTER</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;800&display=swap');
 
@@ -16,54 +16,48 @@
         }
 
         #ui-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            display: flex; flex-direction: column; justify-content: space-between;
             z-index: 10;
         }
 
-        .hud-top {
-            padding: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+        /* 아드레날린(위기) 효과 오버레이 */
+        #adrenaline-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(255, 0, 0, 0.2) 90%);
+            box-shadow: inset 0 0 100px #000;
+            opacity: 0; transition: opacity 0.2s; pointer-events: none;
+            z-index: 5; mix-blend-mode: overlay;
         }
 
+        .hud-top {
+            padding: 30px; display: flex; justify-content: space-between; align-items: flex-start;
+        }
         .score-container { text-align: left; }
-        .score-label { font-size: 16px; color: #00f3ff; opacity: 0.7; letter-spacing: 2px; }
-        .score-value { font-size: 48px; font-weight: 800; color: #fff; text-shadow: 0 0 20px #00f3ff; line-height: 1; }
+        .score-label { font-size: 16px; color: var(--theme-color, #00f3ff); opacity: 0.7; letter-spacing: 2px; transition: color 1s;}
+        .score-value { font-size: 48px; font-weight: 800; color: #fff; text-shadow: 0 0 20px var(--theme-color, #00f3ff); line-height: 1; transition: text-shadow 1s;}
 
-        .audio-viz { display: flex; gap: 3px; align-items: flex-end; height: 30px; }
-        .bar { width: 4px; background: #ff0055; animation: equalizer 0.5s infinite; }
-        @keyframes equalizer { 0% { height: 20%; } 50% { height: 100%; } 100% { height: 20%; } }
+        .phase-indicator {
+            font-size: 14px; font-weight: bold; color: #fff; background: rgba(255,255,255,0.1);
+            padding: 4px 10px; border-radius: 4px; margin-top: 5px; opacity: 0.8;
+        }
 
         .hud-bottom {
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 10px;
         }
-
         .nitro-label { color: #ffcc00; font-size: 14px; letter-spacing: 4px; font-weight: 700; text-shadow: 0 0 10px #ffcc00; }
         .nitro-bar-container { display: flex; gap: 8px; }
         .nitro-cell { width: 60px; height: 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 204, 0, 0.3); transform: skewX(-20deg); position: relative; overflow: hidden; }
         .nitro-fill { position: absolute; top: 0; left: 0; bottom: 0; width: 0%; background: #ffcc00; box-shadow: 0 0 15px #ffcc00; transition: width 0.1s linear; }
 
         .center-panel {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             text-align: center;
-            background: rgba(5, 5, 10, 0.9);
-            border: 1px solid rgba(0, 243, 255, 0.4);
-            padding: 50px 80px;
-            pointer-events: auto;
+            background: rgba(5, 5, 10, 0.9); border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 50px 80px; pointer-events: auto;
             backdrop-filter: blur(20px);
-            box-shadow: 0 0 100px rgba(0, 243, 255, 0.1), inset 0 0 50px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 100px rgba(0,0,0, 0.5), inset 0 0 50px rgba(0, 0, 0, 0.8);
             z-index: 50;
             clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
         }
@@ -74,7 +68,6 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             text-shadow: 0 0 50px rgba(0, 243, 255, 0.5); letter-spacing: -3px; line-height: 0.9;
         }
-
         p { color: #8899a6; font-size: 18px; margin: 20px 0 40px 0; letter-spacing: 1px; }
 
         .key-hint {
@@ -83,17 +76,17 @@
         }
 
         .btn {
-            background: transparent; border: 2px solid #00f3ff; color: #00f3ff;
+            background: transparent; border: 2px solid #fff; color: #fff;
             padding: 18px 60px; font-size: 24px; font-family: inherit; font-weight: 800;
             cursor: pointer; text-transform: uppercase; letter-spacing: 4px; transition: 0.2s;
             position: relative; overflow: hidden;
         }
-        .btn:hover { background: #00f3ff; color: #000; box-shadow: 0 0 60px #00f3ff; }
+        .btn:hover { background: #fff; color: #000; box-shadow: 0 0 60px rgba(255,255,255,0.8); }
 
         #scanline {
             position: fixed; left: 0; top: 0; width: 100%; height: 100%;
             background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
-            background-size: 100% 4px; pointer-events: none; z-index: 99; opacity: 0.6;
+            background-size: 100% 4px; pointer-events: none; z-index: 99; opacity: 0.5;
         }
 
         #mobile-controls { display: none; position: absolute; bottom: 0; width: 100%; height: 100%; z-index: 20; }
@@ -124,6 +117,7 @@
 </head>
 <body>
     <div id="scanline"></div>
+    <div id="adrenaline-overlay"></div>
     <div id="canvas-container"></div>
 
     <div id="ui-layer">
@@ -131,27 +125,23 @@
             <div class="score-container">
                 <div class="score-label">SYNC RATE</div>
                 <div class="score-value" id="score">0</div>
-            </div>
-            <div class="audio-viz">
-                <div class="bar" style="animation-duration: 0.4s"></div>
-                <div class="bar" style="animation-duration: 0.6s"></div>
-                <div class="bar" style="animation-duration: 0.3s"></div>
-                <div class="bar" style="animation-duration: 0.5s"></div>
+                <div class="phase-indicator" id="phase-label">PHASE 1: STABLE</div>
             </div>
         </div>
 
         <div id="start-screen" class="center-panel">
-            <h1>NEON<br>ULTIMATE</h1>
+            <h1>NEON<br>MASTERPIECE</h1>
             <p>
                 <span class="key-hint">←</span> <span class="key-hint">→</span> TURN <span style="color:#aaa">|</span> 
-                <span class="key-hint">↓</span> REPEAT TURN (U-TURN)<br><br>
-                <span class="key-hint" style="color:#ffcc00; border-color:#ffcc00">↑ HOLD</span> FOR HYPER DASH<br>
+                <span class="key-hint">↓</span> REPEAT TURN<br><br>
+                <span class="key-hint" style="color:#ffcc00; border-color:#ffcc00">↑ HOLD</span> HYPER DASH<br>
+                <span class="key-hint" style="color:#ff3366; border-color:#ff3366">⚠</span> REFLEX AUTO-ACTIVE
             </p>
-            <button class="btn" id="btn-start">SYSTEM LINK</button>
+            <button class="btn" id="btn-start">JACK IN</button>
         </div>
 
         <div id="game-over-screen" class="center-panel" style="display: none;">
-            <h1 style="background: linear-gradient(90deg, #ff0055, #ff4400); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FATAL ERROR</h1>
+            <h1 style="background: linear-gradient(90deg, #ff0055, #ff4400); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FLATLINED</h1>
             <p>FINAL SYNC: <span id="final-score" style="color:#fff; font-weight:bold;">0</span></p>
             <button class="btn" id="btn-restart" style="border-color: #ff0055; color: #ff0055;">REBOOT</button>
         </div>
@@ -186,30 +176,35 @@
         class AudioEngine {
             constructor() {
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Adrenaline LowPass Filter
+                this.adrenalineFilter = this.ctx.createBiquadFilter();
+                this.adrenalineFilter.type = 'lowpass';
+                this.adrenalineFilter.frequency.value = 22000;
+                this.adrenalineFilter.Q.value = 1;
+
                 this.master = this.ctx.createGain();
                 this.master.gain.value = 0.5;
                 
                 this.compressor = this.ctx.createDynamicsCompressor();
-                this.compressor.threshold.value = -10;
-                this.compressor.ratio.value = 12;
-                this.compressor.release.value = 0.25;
+                this.compressor.connect(this.adrenalineFilter);
+                this.adrenalineFilter.connect(this.ctx.destination);
 
                 this.reverb = this.createReverb(2.0);
                 this.reverbGain = this.ctx.createGain();
                 this.reverbGain.gain.value = 0.3;
 
                 this.master.connect(this.compressor);
-                this.compressor.connect(this.ctx.destination);
                 this.master.connect(this.reverb);
                 this.reverb.connect(this.reverbGain);
-                this.reverbGain.connect(this.ctx.destination);
+                this.reverbGain.connect(this.adrenalineFilter);
 
                 this.isPlaying = false;
                 this.tempo = 128;
                 this.nextNoteTime = 0;
                 this.beat = 0;
                 this.dashIntensity = 0;
-                this.score = 0;
+                this.phase = 1;
             }
             createReverb(duration) {
                 const len = this.ctx.sampleRate * duration;
@@ -235,6 +230,11 @@
             setDashState(isDashing) {
                 this.dashIntensity = isDashing ? 1 : 0;
             }
+            setAdrenaline(active) {
+                const now = this.ctx.currentTime;
+                const targetFreq = active ? 400 : 22000;
+                this.adrenalineFilter.frequency.setTargetAtTime(targetFreq, now, 0.2);
+            }
             schedule() {
                 if(!this.isPlaying) return;
                 const secPerBeat = 60.0 / this.tempo;
@@ -249,173 +249,90 @@
             playTick(t, beat) {
                 const step16 = beat % 16;
                 if(step16 % 4 === 0) this.synthKick(t);
+                
                 if(step16 % 4 === 2 || step16 % 4 === 3) {
-                    const freq = this.dashIntensity ? 110 : 55; 
+                    const freq = this.dashIntensity ? 110 : (this.phase === 3 ? 65 : 55); 
                     this.synthBass(t, freq);
                 }
-                if(step16 === 4 || step16 === 12) this.synthSnare(t);
+                
+                if(this.phase >= 2) {
+                    if(step16 === 4 || step16 === 12) this.synthSnare(t);
+                }
+
                 if(step16 % 2 === 0) {
-                    if(this.dashIntensity || this.score > 50) this.synthHihat(t, step16 % 4 === 2 ? 0.1 : 0.05);
+                    if(this.dashIntensity || this.phase >= 2) this.synthHihat(t, step16 % 4 === 2 ? 0.1 : 0.05);
                     else if(step16 % 4 === 2) this.synthHihat(t, 0.05);
                 }
-                if(this.score >= 0) { 
-                    const scale = [0, 3, 5, 7, 10]; 
-                    const root = 440; 
-                    const noteIdx = (beat * 3) % 5;
-                    const octave = this.dashIntensity ? 2 : 1; 
-                    if(step16 % 2 === 0) {
-                        const freq = root * Math.pow(2, scale[noteIdx]/12 - 1) * octave;
-                        this.synthArp(t, freq, this.dashIntensity ? 0.15 : 0.05);
-                    }
+                
+                const scale = [0, 3, 5, 7, 10]; 
+                const root = 440; 
+                const noteIdx = (beat * (this.phase === 3 ? 7 : 3)) % 5;
+                const octave = (this.dashIntensity || this.phase === 3) ? 2 : 1; 
+                if(step16 % 2 === 0) {
+                    const freq = root * Math.pow(2, scale[noteIdx]/12 - 1) * octave;
+                    this.synthArp(t, freq, this.dashIntensity ? 0.15 : 0.05);
                 }
             }
-            synthKick(t) {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.connect(gain); gain.connect(this.master);
-                osc.frequency.setValueAtTime(150, t);
-                osc.frequency.exponentialRampToValueAtTime(0.01, t+0.5);
-                gain.gain.setValueAtTime(1.0, t);
-                gain.gain.exponentialRampToValueAtTime(0.01, t+0.5);
-                osc.start(t); osc.stop(t+0.5);
-            }
-            synthBass(t, freq) {
-                const osc = this.ctx.createOscillator();
-                osc.type = 'sawtooth';
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                const gain = this.ctx.createGain();
-                osc.connect(filter); filter.connect(gain); gain.connect(this.master);
-                osc.frequency.setValueAtTime(freq, t);
-                const filterQ = this.dashIntensity ? 2000 : 400;
-                filter.frequency.setValueAtTime(100, t);
-                filter.frequency.exponentialRampToValueAtTime(filterQ, t+0.1);
-                gain.gain.setValueAtTime(0.4, t);
-                gain.gain.linearRampToValueAtTime(0, t+0.2);
-                osc.start(t); osc.stop(t+0.2);
-            }
-            synthSnare(t) {
-                const noiseBuffer = this.ctx.createBuffer(1, this.ctx.sampleRate*0.2, this.ctx.sampleRate);
-                const data = noiseBuffer.getChannelData(0);
-                for(let i=0; i<data.length; i++) data[i] = Math.random()*2-1;
-                const src = this.ctx.createBufferSource();
-                src.buffer = noiseBuffer;
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'highpass'; filter.frequency.value = 1000;
-                const gain = this.ctx.createGain();
-                src.connect(filter); filter.connect(gain); gain.connect(this.master);
-                gain.connect(this.reverb);
-                gain.gain.setValueAtTime(0.5, t);
-                gain.gain.exponentialRampToValueAtTime(0.01, t+0.2);
-                src.start(t);
-            }
-            synthHihat(t, vol) {
-                const osc = this.ctx.createOscillator();
-                osc.type = 'square';
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'highpass'; filter.frequency.value = 8000;
-                const gain = this.ctx.createGain();
-                osc.connect(filter); filter.connect(gain); gain.connect(this.master);
-                osc.frequency.setValueAtTime(800 + Math.random()*200, t); 
-                gain.gain.setValueAtTime(vol, t);
-                gain.gain.exponentialRampToValueAtTime(0.01, t+0.05);
-                osc.start(t); osc.stop(t+0.05);
-            }
-            synthArp(t, freq, vol) {
-                const osc = this.ctx.createOscillator();
-                osc.type = 'triangle'; 
-                const gain = this.ctx.createGain();
-                const delay = this.ctx.createDelay();
-                delay.delayTime.value = 0.25; 
-                const delayGain = this.ctx.createGain();
-                delayGain.gain.value = 0.4;
-                osc.connect(gain);
-                gain.connect(this.master); gain.connect(delay);
-                delay.connect(delayGain); delayGain.connect(this.master);
-                delayGain.connect(delay); 
-                osc.frequency.setValueAtTime(freq, t);
-                gain.gain.setValueAtTime(vol, t);
-                gain.gain.exponentialRampToValueAtTime(0.01, t+0.3);
-                osc.start(t); osc.stop(t+0.5); 
-            }
-            playSound(type) {
-                const t = this.ctx.currentTime;
-                if(type === 'eat') {
-                    const osc = this.ctx.createOscillator();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(1000, t);
-                    osc.frequency.linearRampToValueAtTime(2000, t+0.1);
-                    const gain = this.ctx.createGain();
-                    gain.gain.setValueAtTime(0.5, t);
-                    gain.gain.exponentialRampToValueAtTime(0.01, t+0.1);
-                    osc.connect(gain); gain.connect(this.master);
-                    osc.start(t); osc.stop(t+0.1);
-                }
-            }
+            synthKick(t){ const o=this.ctx.createOscillator();const g=this.ctx.createGain();o.connect(g);g.connect(this.master);o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(0.01,t+0.5);g.gain.setValueAtTime(1,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.5);o.start(t);o.stop(t+0.5); }
+            synthBass(t,f){ const o=this.ctx.createOscillator();o.type='sawtooth';const fl=this.ctx.createBiquadFilter();fl.type='lowpass';const g=this.ctx.createGain();o.connect(fl);fl.connect(g);g.connect(this.master);o.frequency.setValueAtTime(f,t);const q=this.dashIntensity?2000:400;fl.frequency.setValueAtTime(100,t);fl.frequency.exponentialRampToValueAtTime(q,t+0.1);g.gain.setValueAtTime(0.4,t);g.gain.linearRampToValueAtTime(0,t+0.2);o.start(t);o.stop(t+0.2); }
+            synthSnare(t){ const b=this.ctx.createBuffer(1,this.ctx.sampleRate*0.2,this.ctx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const s=this.ctx.createBufferSource();s.buffer=b;const f=this.ctx.createBiquadFilter();f.type='highpass';f.frequency.value=1000;const g=this.ctx.createGain();s.connect(f);f.connect(g);g.connect(this.master);g.connect(this.reverb);g.gain.setValueAtTime(0.5,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.2);s.start(t); }
+            synthHihat(t,v){ const o=this.ctx.createOscillator();o.type='square';const f=this.ctx.createBiquadFilter();f.type='highpass';f.frequency.value=8000;const g=this.ctx.createGain();o.connect(f);f.connect(g);g.connect(this.master);o.frequency.setValueAtTime(800+Math.random()*200,t);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.05);o.start(t);o.stop(t+0.05); }
+            synthArp(t,f,v){ const o=this.ctx.createOscillator();o.type='triangle';const g=this.ctx.createGain();const d=this.ctx.createDelay();d.delayTime.value=0.25;const dg=this.ctx.createGain();dg.gain.value=0.4;o.connect(g);g.connect(this.master);g.connect(d);d.connect(dg);dg.connect(this.master);dg.connect(d);o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.3);o.start(t);o.stop(t+0.5); }
+            playSound(type){ const t=this.ctx.currentTime; if(type==='eat'){ const o=this.ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(1000,t);o.frequency.linearRampToValueAtTime(2000,t+0.1);const g=this.ctx.createGain();g.gain.setValueAtTime(0.5,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.1);o.connect(g);g.connect(this.master);o.start(t);o.stop(t+0.1); } }
         }
 
-        // --- GAME LOGIC ---
+        // --- PHASE MANAGER ---
+        const PHASES = [
+            { score: 0, color: 0x00f3ff, name: "PHASE 1: STABLE", fog: 0x050010 },
+            { score: 50, color: 0xbc13fe, name: "PHASE 2: ACCEL", fog: 0x1a0022 },
+            { score: 150, color: 0xff0044, name: "PHASE 3: CRITICAL", fog: 0x220000 }
+        ];
+
+        // --- GAME CONSTANTS ---
         const GRID_SIZE = 40;
         const BASE_SPEED = 0.08;
         const DASH_SPEED_MULT = 2.5;
         const MAX_DASH_FUEL = 4.0;
         const DASH_CONSUMPTION = 0.5;
+        const ADRENALINE_RANGE = 3; 
         
-        let scene, camera, renderer, composer, rgbShiftPass;
-        let snakeGroup, cityGroup, particles;
+        let scene, camera, renderer, composer, rgbShiftPass, filmPass;
+        let snakeGroup, cityGroup, particles, gridHelper, wallLines;
         let snakeData = [];
         let direction = new THREE.Vector3(0, 0, -1);
-        
-        // ** 입력 큐 시스템 **
-        let inputQueue = [];
-        let lastTurnAction = null; // 'left' or 'right'
-
+        let inputQueue = [], lastTurnAction = null;
         let foodMesh;
-        let gameState = {
-            isPlaying: false, score: 0, speed: BASE_SPEED,
-            dashFuel: 0, isDashing: false
-        };
+        let gameState = { isPlaying: false, score: 0, speed: BASE_SPEED, dashFuel: 0, isDashing: false, phase: 0 };
         let lastTime = 0, moveTimer = 0, audioEngine;
+        let currentThemeColor = new THREE.Color(PHASES[0].color);
+        let targetThemeColor = new THREE.Color(PHASES[0].color);
+        let adrenalineFactor = 1.0;
 
+        // Particle System
         class ParticleSystem {
             constructor(scene) {
-                this.particles = [];
-                this.scene = scene;
-                this.geometry = new THREE.TetrahedronGeometry(0.2);
-                this.material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                this.particles = []; this.scene = scene; this.geometry = new THREE.TetrahedronGeometry(0.2); this.material = new THREE.MeshBasicMaterial({ color: 0xffffff });
             }
             explode(x, z, color, count=10, speed=1) {
                 for(let i=0; i<count; i++) {
                     const mesh = new THREE.Mesh(this.geometry, this.material.clone());
-                    mesh.material.color.setHex(color);
-                    mesh.position.set(x, 0.5, z);
-                    const angle = Math.random() * Math.PI * 2;
-                    const velY = Math.random() * 0.2 * speed;
-                    const velH = Math.random() * 0.3 * speed;
-                    this.scene.add(mesh);
-                    this.particles.push({ mesh, vx: Math.cos(angle)*velH, vy: velY, vz: Math.sin(angle)*velH, life: 1.0 });
+                    mesh.material.color.setHex(color); mesh.position.set(x, 0.5, z);
+                    const angle = Math.random()*Math.PI*2; const velY = Math.random()*0.2*speed; const velH = Math.random()*0.3*speed;
+                    this.scene.add(mesh); this.particles.push({ mesh, vx: Math.cos(angle)*velH, vy: velY, vz: Math.sin(angle)*velH, life: 1.0 });
                 }
             }
             update(delta) {
                 for(let i=this.particles.length-1; i>=0; i--) {
-                    const p = this.particles[i];
-                    p.life -= delta * 2;
-                    if(p.life <= 0) {
-                        this.scene.remove(p.mesh);
-                        this.particles.splice(i, 1); continue;
-                    }
+                    const p = this.particles[i]; p.life -= delta*2;
+                    if(p.life <= 0) { this.scene.remove(p.mesh); this.particles.splice(i, 1); continue; }
                     p.mesh.position.x += p.vx; p.mesh.position.y += p.vy; p.mesh.position.z += p.vz;
-                    p.mesh.rotation.x += delta*5; p.mesh.rotation.y += delta*5;
-                    p.mesh.scale.setScalar(p.life);
+                    p.mesh.rotation.x += delta*5; p.mesh.rotation.y += delta*5; p.mesh.scale.setScalar(p.life);
                 }
             }
         }
 
         function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x020005);
-            scene.fog = new THREE.FogExp2(0x050010, 0.012);
-
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0x020005); scene.fog = new THREE.FogExp2(0x050010, 0.012);
             camera = new THREE.PerspectiveCamera(85, window.innerWidth/window.innerHeight, 0.1, 500);
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -424,17 +341,11 @@
 
             composer = new EffectComposer(renderer);
             composer.addPass(new RenderPass(scene, camera));
-            
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.1; bloomPass.strength = 1.2; bloomPass.radius = 0.5;
+            bloomPass.threshold = 0.1; bloomPass.strength = 1.5; bloomPass.radius = 0.5;
             composer.addPass(bloomPass);
-
-            rgbShiftPass = new ShaderPass(RGBShiftShader);
-            rgbShiftPass.uniforms['amount'].value = 0.001;
-            composer.addPass(rgbShiftPass);
-
-            const filmPass = new FilmPass(0.35, 0.25, 648, false);
-            composer.addPass(filmPass);
+            rgbShiftPass = new ShaderPass(RGBShiftShader); rgbShiftPass.uniforms['amount'].value = 0.001; composer.addPass(rgbShiftPass);
+            filmPass = new FilmPass(0.35, 0.25, 648, false); composer.addPass(filmPass);
 
             createEnvironment();
             snakeGroup = new THREE.Group(); scene.add(snakeGroup);
@@ -447,10 +358,7 @@
             document.getElementById('btn-start').addEventListener('click', startGame);
             document.getElementById('btn-restart').addEventListener('click', startGame);
 
-            // Touch
-            const tLeft = document.getElementById('t-left');
-            const tRight = document.getElementById('t-right');
-            const tDash = document.getElementById('t-dash');
+            const tLeft = document.getElementById('t-left'); const tRight = document.getElementById('t-right'); const tDash = document.getElementById('t-dash');
             tLeft.addEventListener('touchstart', (e)=>{ e.preventDefault(); queueInput('left'); });
             tRight.addEventListener('touchstart', (e)=>{ e.preventDefault(); queueInput('right'); });
             tDash.addEventListener('touchstart', (e)=>{ e.preventDefault(); if(gameState.isPlaying) gameState.isDashing = true; });
@@ -460,24 +368,21 @@
         }
 
         function createEnvironment() {
-            const gridHelper = new THREE.GridHelper(GRID_SIZE*6, GRID_SIZE*3, 0x5500aa, 0x110022);
+            gridHelper = new THREE.GridHelper(GRID_SIZE*6, GRID_SIZE*3, 0x5500aa, 0x110022);
             gridHelper.position.y = -0.5; scene.add(gridHelper);
             const geo = new THREE.BoxGeometry(GRID_SIZE*2, 4, GRID_SIZE*2);
             const edges = new THREE.EdgesGeometry(geo);
             const mat = new THREE.LineBasicMaterial({ color: 0x00f3ff, linewidth: 2 });
-            const walls = new THREE.LineSegments(edges, mat);
-            walls.position.y = 1.5; scene.add(walls);
+            wallLines = new THREE.LineSegments(edges, mat);
+            wallLines.position.y = 1.5; scene.add(wallLines);
 
             cityGroup = new THREE.Group();
             for(let i=0; i<300; i++) {
-                const angle = Math.random() * Math.PI*2;
-                const dist = GRID_SIZE*1.5 + Math.random()*(GRID_SIZE*3.5);
+                const angle = Math.random()*Math.PI*2; const dist = GRID_SIZE*1.5 + Math.random()*(GRID_SIZE*3.5);
                 const x = Math.cos(angle)*dist; const z = Math.sin(angle)*dist;
                 const h = 20 + Math.random()*60;
-                const bGeo = new THREE.BoxGeometry(3, h, 3);
-                const bEdges = new THREE.EdgesGeometry(bGeo);
-                const color = Math.random() > 0.5 ? 0xaa00ff : 0x0066ff;
-                const bMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.6 });
+                const bGeo = new THREE.BoxGeometry(3, h, 3); const bEdges = new THREE.EdgesGeometry(bGeo);
+                const bMat = new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.3 });
                 const mesh = new THREE.LineSegments(bEdges, bMat);
                 mesh.position.set(x, h/2 - 10, z); cityGroup.add(mesh);
             }
@@ -489,39 +394,26 @@
             audioEngine.resume();
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-over-screen').style.display = 'none';
-            gameState.isPlaying = true; gameState.score = 0; gameState.dashFuel = 0; gameState.isDashing = false;
-            updateScoreUI(); updateDashUI();
+            gameState.isPlaying = true; gameState.score = 0; gameState.dashFuel = 0; gameState.isDashing = false; gameState.phase = 0;
+            updatePhase(0); updateScoreUI(); updateDashUI();
             
             while(snakeGroup.children.length > 0) snakeGroup.remove(snakeGroup.children[0]);
             snakeData = [];
             for(let i=0; i<5; i++) addSnakePart(0, i);
-            
-            direction.set(0, 0, -1);
-            
-            // 입력 큐 초기화
-            inputQueue = [];
-            lastTurnAction = null;
-
-            spawnFood();
-            moveTimer = 0; lastTime = performance.now();
+            direction.set(0, 0, -1); inputQueue = []; lastTurnAction = null;
+            spawnFood(); moveTimer = 0; lastTime = performance.now();
         }
 
         function addSnakePart(x, z) {
             const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
             const isHead = snakeData.length === 0;
             const mat = new THREE.MeshStandardMaterial({
-                color: isHead ? 0xffffff : 0x00f3ff,
-                emissive: isHead ? 0xffffff : 0x0044ff,
-                emissiveIntensity: isHead ? 1.5 : 0.8,
-                roughness: 0.2, metalness: 0.8
+                color: isHead ? 0xffffff : currentThemeColor,
+                emissive: isHead ? 0xffffff : currentThemeColor,
+                emissiveIntensity: isHead ? 1.5 : 0.8, roughness: 0.2, metalness: 0.8
             });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(x, 0, z);
-            snakeGroup.add(mesh);
-            if(isHead) {
-                const light = new THREE.PointLight(0x00f3ff, 5, 40);
-                light.position.y = 2; mesh.add(light);
-            }
+            const mesh = new THREE.Mesh(geo, mat); mesh.position.set(x, 0, z); snakeGroup.add(mesh);
+            if(isHead) { const light = new THREE.PointLight(currentThemeColor, 5, 40); light.position.y = 2; mesh.add(light); }
             snakeData.push({ mesh, currX: x, currZ: z, prevX: x, prevZ: z });
         }
 
@@ -529,98 +421,113 @@
             if(foodMesh) scene.remove(foodMesh);
             let valid = false, x, z;
             while(!valid) {
-                x = Math.floor(Math.random()*GRID_SIZE*2) - GRID_SIZE;
-                z = Math.floor(Math.random()*GRID_SIZE*2) - GRID_SIZE;
-                valid = true;
-                for(let p of snakeData) if(Math.round(p.currX)===x && Math.round(p.currZ)===z) valid=false;
+                x = Math.floor(Math.random()*GRID_SIZE*2) - GRID_SIZE; z = Math.floor(Math.random()*GRID_SIZE*2) - GRID_SIZE;
+                valid = true; for(let p of snakeData) if(Math.round(p.currX)===x && Math.round(p.currZ)===z) valid=false;
             }
             const geo = new THREE.OctahedronGeometry(0.6, 0);
             const mat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0xff5500, emissiveIntensity: 3.0 });
-            foodMesh = new THREE.Mesh(geo, mat);
-            foodMesh.position.set(x, 0.5, z);
-            const light = new THREE.PointLight(0xff5500, 3, 10);
-            foodMesh.add(light); scene.add(foodMesh);
+            foodMesh = new THREE.Mesh(geo, mat); foodMesh.position.set(x, 0.5, z);
+            const light = new THREE.PointLight(0xff5500, 3, 10); foodMesh.add(light); scene.add(foodMesh);
             particles.explode(x, z, 0xffaa00, 5, 0.5);
         }
 
-        // --- QUEUE BASED INPUT SYSTEM ---
-        function queueInput(turnAction) {
-            // 버퍼 제한 (너무 많이 쌓이면 반응 느려짐 방지)
-            if(inputQueue.length < 2) {
-                inputQueue.push(turnAction);
-            }
-        }
-
+        function queueInput(turnAction) { if(inputQueue.length < 2) inputQueue.push(turnAction); }
         function onKeyDown(e) {
             if(!gameState.isPlaying) return;
-            
-            if(e.key === 'ArrowLeft') {
-                queueInput('left');
-                lastTurnAction = 'left';
+            if(e.key === 'ArrowLeft') { queueInput('left'); lastTurnAction = 'left'; }
+            else if(e.key === 'ArrowRight') { queueInput('right'); lastTurnAction = 'right'; }
+            else if(e.key === 'ArrowDown') { if(lastTurnAction) queueInput(lastTurnAction); }
+            else if(e.key === 'ArrowUp') gameState.isDashing = true;
+        }
+        function onKeyUp(e) { if(e.key === 'ArrowUp') gameState.isDashing = false; }
+
+        function checkAdrenaline() {
+            if(!gameState.isPlaying) return 1.0;
+            const head = snakeData[0];
+            let danger = false;
+            let checkDir = direction.clone();
+            if(inputQueue.length > 0) {
+                 const axis = new THREE.Vector3(0, 1, 0);
+                 const angle = (inputQueue[0] === 'left') ? Math.PI/2 : -Math.PI/2;
+                 checkDir.applyAxisAngle(axis, angle);
+                 checkDir.x = Math.round(checkDir.x); checkDir.z = Math.round(checkDir.z);
             }
-            else if(e.key === 'ArrowRight') {
-                queueInput('right');
-                lastTurnAction = 'right';
-            }
-            else if(e.key === 'ArrowDown') {
-                // 아래 화살표: 마지막 회전 반복 (U-Turn Macro)
-                if(lastTurnAction) {
-                    queueInput(lastTurnAction);
+            for(let i=1; i<=ADRENALINE_RANGE; i++) {
+                const targetX = head.currX + checkDir.x * i;
+                const targetZ = head.currZ + checkDir.z * i;
+                if(Math.abs(targetX) > GRID_SIZE || Math.abs(targetZ) > GRID_SIZE) { danger = true; break; }
+                for(let j=1; j<snakeData.length-1; j++) {
+                    if(snakeData[j].currX === targetX && snakeData[j].currZ === targetZ) { danger = true; break; }
                 }
             }
-            else if(e.key === 'ArrowUp') {
-                gameState.isDashing = true;
-            }
+            return danger ? 0.2 : 1.0;
         }
 
-        function onKeyUp(e) {
-            if(e.key === 'ArrowUp') gameState.isDashing = false;
+        function updatePhase(score) {
+            let pIdx = 0;
+            for(let i=0; i<PHASES.length; i++) { if(score >= PHASES[i].score) pIdx = i; }
+            if(gameState.phase !== pIdx + 1) {
+                gameState.phase = pIdx + 1;
+                const p = PHASES[pIdx];
+                targetThemeColor.setHex(p.color);
+                document.getElementById('phase-label').innerText = p.name;
+                document.documentElement.style.setProperty('--theme-color', '#' + p.color.toString(16).padStart(6,'0'));
+                scene.fog.color.setHex(p.fog);
+                audioEngine.phase = gameState.phase;
+            }
         }
 
         function update(delta) {
-            if(!gameState.isPlaying) {
-                if(cityGroup) cityGroup.rotation.y += delta * 0.05;
-                return;
-            }
+            if(!gameState.isPlaying) { if(cityGroup) cityGroup.rotation.y += delta*0.05; return; }
+
+            const targetAdrenaline = checkAdrenaline();
+            adrenalineFactor = THREE.MathUtils.lerp(adrenalineFactor, targetAdrenaline, 0.1);
+            filmPass.uniforms.grayscale.value = (1.0 - adrenalineFactor) * 1.5; 
+            document.getElementById('adrenaline-overlay').style.opacity = (1.0 - adrenalineFactor);
+            audioEngine.setAdrenaline(adrenalineFactor < 0.8);
+
+            const slowDelta = delta * adrenalineFactor;
 
             let effectiveSpeed = BASE_SPEED;
             let isBoosting = false;
             if(gameState.isDashing && gameState.dashFuel > 0) {
-                isBoosting = true;
-                effectiveSpeed = BASE_SPEED / DASH_SPEED_MULT;
-                gameState.dashFuel -= DASH_CONSUMPTION * delta;
+                isBoosting = true; effectiveSpeed = BASE_SPEED / DASH_SPEED_MULT;
+                gameState.dashFuel -= DASH_CONSUMPTION * slowDelta;
                 if(gameState.dashFuel < 0) gameState.dashFuel = 0;
                 updateDashUI();
                 rgbShiftPass.uniforms['amount'].value = THREE.MathUtils.lerp(rgbShiftPass.uniforms['amount'].value, 0.005, 0.1);
                 const tail = snakeData[snakeData.length-1];
-                if(Math.random() > 0.5) particles.explode(tail.currX, tail.currZ, 0x00f3ff, 1, 0.5);
+                if(Math.random() > 0.5) particles.explode(tail.currX, tail.currZ, currentThemeColor.getHex(), 1, 0.5);
             } else {
                 rgbShiftPass.uniforms['amount'].value = THREE.MathUtils.lerp(rgbShiftPass.uniforms['amount'].value, 0.001, 0.1);
             }
             audioEngine.setDashState(isBoosting);
 
-            moveTimer += delta;
-            if(moveTimer >= effectiveSpeed) {
-                moveTimer = 0;
-                tick();
-            }
+            moveTimer += slowDelta;
+            if(moveTimer >= effectiveSpeed) { moveTimer = 0; tick(); }
 
+            currentThemeColor.lerp(targetThemeColor, 0.01);
+            gridHelper.material.color.copy(currentThemeColor);
+            wallLines.material.color.copy(currentThemeColor);
+            
             const progress = Math.min(moveTimer / effectiveSpeed, 1.0);
             for(let p of snakeData) {
                 p.mesh.position.x = THREE.MathUtils.lerp(p.prevX, p.currX, progress);
                 p.mesh.position.z = THREE.MathUtils.lerp(p.prevZ, p.currZ, progress);
+                if(p.mesh.material.emissive) p.mesh.material.emissive.copy(currentThemeColor);
+                if(p.mesh.children.length > 0) p.mesh.children[0].color.copy(currentThemeColor);
             }
-            updateCamera(progress, isBoosting);
+
+            updateCamera(progress, isBoosting, slowDelta);
             
             if(foodMesh) {
-                foodMesh.rotation.y += delta * 4;
+                foodMesh.rotation.y += slowDelta*4;
                 foodMesh.position.y = 0.5 + Math.sin(performance.now()*0.008)*0.2;
             }
-            particles.update(delta);
+            particles.update(slowDelta);
         }
 
         function tick() {
-            // 큐에서 입력 하나 꺼내서 방향 적용
             if(inputQueue.length > 0) {
                 const turnAction = inputQueue.shift();
                 const axis = new THREE.Vector3(0, 1, 0);
@@ -629,24 +536,16 @@
                 newDir.x = Math.round(newDir.x); newDir.z = Math.round(newDir.z);
                 direction.copy(newDir);
             }
-
             const head = snakeData[0];
             const nx = head.currX + direction.x;
             const nz = head.currZ + direction.z;
-
             if(Math.abs(nx) > GRID_SIZE || Math.abs(nz) > GRID_SIZE) { gameOver(); return; }
-            for(let i=0; i<snakeData.length-1; i++) {
-                if(snakeData[i].currX === nx && snakeData[i].currZ === nz) { gameOver(); return; }
-            }
-
+            for(let i=0; i<snakeData.length-1; i++) { if(snakeData[i].currX === nx && snakeData[i].currZ === nz) { gameOver(); return; } }
             for(let p of snakeData) { p.prevX = p.currX; p.prevZ = p.currZ; }
-
             let ate = false;
             if(foodMesh && Math.round(nx) === Math.round(foodMesh.position.x) && Math.round(nz) === Math.round(foodMesh.position.z)) {
-                ate = true;
-                gameState.score += 10;
-                audioEngine.score = gameState.score;
-                audioEngine.playSound('eat');
+                ate = true; gameState.score += 10; updatePhase(gameState.score);
+                audioEngine.score = gameState.score; audioEngine.playSound('eat');
                 particles.explode(nx, nz, 0xffaa00, 20, 2);
                 if(gameState.dashFuel < MAX_DASH_FUEL) {
                     gameState.dashFuel += 1.0;
@@ -655,51 +554,35 @@
                 }
                 updateScoreUI(); spawnFood();
             }
-
             if(ate) {
-                const tail = snakeData[snakeData.length-1];
-                addSnakePart(tail.prevX, tail.prevZ);
-                const newTail = snakeData[snakeData.length-1];
-                newTail.prevX = tail.prevX; newTail.prevZ = tail.prevZ;
-                newTail.currX = tail.prevX; newTail.currZ = tail.prevZ;
+                const tail = snakeData[snakeData.length-1]; addSnakePart(tail.prevX, tail.prevZ);
+                const newTail = snakeData[snakeData.length-1]; newTail.prevX = tail.prevX; newTail.prevZ = tail.prevZ; newTail.currX = tail.prevX; newTail.currZ = tail.prevZ;
             }
-            for(let i=snakeData.length-1; i>0; i--) {
-                snakeData[i].currX = snakeData[i-1].currX;
-                snakeData[i].currZ = snakeData[i-1].currZ;
-            }
+            for(let i=snakeData.length-1; i>0; i--) { snakeData[i].currX = snakeData[i-1].currX; snakeData[i].currZ = snakeData[i-1].currZ; }
             head.currX = nx; head.currZ = nz;
         }
 
-        function updateCamera(progress, isBoosting) {
+        function updateCamera(progress, isBoosting, delta) {
             if(snakeData.length === 0) return;
             const head = snakeData[0].mesh;
             const backVec = direction.clone().negate().normalize();
-            const targetDist = isBoosting ? 20 : 14;
-            const targetHeight = isBoosting ? 8 : 10;
-            const targetFOV = isBoosting ? 110 : 85;
-            camera.fov = THREE.MathUtils.lerp(camera.fov, targetFOV, 0.05);
-            camera.updateProjectionMatrix();
+            
+            const targetDist = isBoosting ? 20 : 14; const targetHeight = isBoosting ? 8 : 10; const targetFOV = isBoosting ? 110 : 85;
+            camera.fov = THREE.MathUtils.lerp(camera.fov, targetFOV, 0.05); camera.updateProjectionMatrix();
+
             const targetPos = new THREE.Vector3();
             targetPos.copy(head.position).add(backVec.multiplyScalar(targetDist)).add(new THREE.Vector3(0, targetHeight, 0));
             const lookPos = new THREE.Vector3();
             lookPos.copy(head.position).add(direction.clone().multiplyScalar(15));
-            if(isBoosting) {
-                targetPos.x += (Math.random()-0.5) * 0.2;
-                targetPos.y += (Math.random()-0.5) * 0.2;
-            }
+            if(isBoosting) { targetPos.x += (Math.random()-0.5)*0.2; targetPos.y += (Math.random()-0.5)*0.2; }
+            
+            // Stable Camera (No Banking)
             camera.position.lerp(targetPos, 0.1);
             camera.lookAt(lookPos);
         }
 
         function updateScoreUI() { document.getElementById('score').innerText = gameState.score; }
-        function updateDashUI() {
-            for(let i=0; i<4; i++) {
-                const cell = document.getElementById(`cell-${i}`);
-                if(gameState.dashFuel > i + 1) cell.style.width = '100%';
-                else if (gameState.dashFuel > i) cell.style.width = `${(gameState.dashFuel - i) * 100}%`;
-                else cell.style.width = '0%';
-            }
-        }
+        function updateDashUI() { for(let i=0; i<4; i++) { const c=document.getElementById(`cell-${i}`); if(gameState.dashFuel>i+1)c.style.width='100%'; else if(gameState.dashFuel>i)c.style.width=`${(gameState.dashFuel-i)*100}%`; else c.style.width='0%'; } }
         function gameOver() {
             gameState.isPlaying = false; audioEngine.stop();
             snakeData.forEach(p => { p.mesh.visible = false; particles.explode(p.currX, p.currZ, 0xff0000, 5, 1); });
@@ -707,20 +590,8 @@
             document.getElementById('final-score').innerText = gameState.score;
             document.getElementById('game-over-screen').style.display = 'block';
         }
-        function onResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
-        }
-        function animate() {
-            requestAnimationFrame(animate);
-            const now = performance.now();
-            const delta = (now - lastTime) / 1000;
-            lastTime = now;
-            update(delta);
-            composer.render();
-        }
+        function onResize() { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); composer.setSize(window.innerWidth, window.innerHeight); }
+        function animate() { requestAnimationFrame(animate); const now = performance.now(); const delta = (now - lastTime)/1000; lastTime = now; update(delta); composer.render(); }
 
         init();
     </script>
