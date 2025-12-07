@@ -1,9 +1,9 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEON SNAKE: HYBRID</title>
+    <title>NEON SNAKE: WIDE VIEW</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;800&display=swap');
 
@@ -41,6 +41,17 @@
             font-size: 14px; font-weight: bold; color: #fff; background: rgba(255,255,255,0.1);
             padding: 4px 10px; border-radius: 4px; margin-top: 5px; opacity: 0.8;
         }
+
+        /* Audio Visualizer */
+        .audio-viz {
+            display: flex; gap: 4px; align-items: flex-end; height: 30px; margin-top: 10px;
+        }
+        .bar {
+            width: 5px; background: #ff00ff;
+            animation: equalizer 0.5s infinite ease-in-out alternate;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+        @keyframes equalizer { 0% { height: 20%; opacity: 0.5; } 100% { height: 100%; opacity: 1; } }
 
         .hud-bottom {
             padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 10px;
@@ -126,10 +137,17 @@
                 <div class="score-value" id="score">0</div>
                 <div class="phase-indicator" id="phase-label">PHASE 1: STABLE</div>
             </div>
+            <div class="audio-viz">
+                <div class="bar" style="animation-duration: 0.4s; height: 60%"></div>
+                <div class="bar" style="animation-duration: 0.2s; height: 40%"></div>
+                <div class="bar" style="animation-duration: 0.5s; height: 80%"></div>
+                <div class="bar" style="animation-duration: 0.3s; height: 50%"></div>
+                <div class="bar" style="animation-duration: 0.6s; height: 90%"></div>
+            </div>
         </div>
 
         <div id="start-screen" class="center-panel">
-            <h1>NEON<br>HYBRID</h1>
+            <h1>NEON<br>WIDE VIEW</h1>
             <p>
                 <span class="key-hint">←</span> <span class="key-hint">→</span> TURN <span style="color:#aaa">|</span> 
                 <span class="key-hint">↓</span> REPEAT TURN<br><br>
@@ -322,7 +340,8 @@
 
         function init() {
             scene = new THREE.Scene(); scene.background = new THREE.Color(0x020005); scene.fog = new THREE.FogExp2(0x050010, 0.012);
-            camera = new THREE.PerspectiveCamera(85, window.innerWidth/window.innerHeight, 0.1, 500);
+            // [WIDE VIEW] FOV 90
+            camera = new THREE.PerspectiveCamera(90, window.innerWidth/window.innerHeight, 0.1, 500);
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
@@ -331,10 +350,9 @@
             composer = new EffectComposer(renderer);
             composer.addPass(new RenderPass(scene, camera));
             
-            // [HYBRID GRAPHICS] Revert Bloom to High Quality (visible walls)
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.1; // Restored low threshold for wall visibility
-            bloomPass.strength = 1.5;  // Restored strength for glorious glow
+            bloomPass.threshold = 0.1; 
+            bloomPass.strength = 1.5;  
             bloomPass.radius = 0.5;
             composer.addPass(bloomPass);
 
@@ -371,14 +389,31 @@
             wallLines.position.y = 1.5; scene.add(wallLines);
 
             cityGroup = new THREE.Group();
-            for(let i=0; i<300; i++) {
-                const angle = Math.random()*Math.PI*2; const dist = GRID_SIZE*1.5 + Math.random()*(GRID_SIZE*3.5);
-                const x = Math.cos(angle)*dist; const z = Math.sin(angle)*dist;
-                const h = 20 + Math.random()*60;
-                const bGeo = new THREE.BoxGeometry(3, h, 3); const bEdges = new THREE.EdgesGeometry(bGeo);
-                const bMat = new THREE.LineBasicMaterial({ color: 0x555555, transparent: true, opacity: 0.5 }); // Increased visibility
+            const count = 300;
+            const minDist = GRID_SIZE * 1.5;
+            const maxDist = GRID_SIZE * 5;
+
+            for(let i=0; i<count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = minDist + Math.random() * (maxDist - minDist);
+                const x = Math.cos(angle) * dist;
+                const z = Math.sin(angle) * dist;
+                const h = 20 + Math.random() * 60;
+                
+                const bGeo = new THREE.BoxGeometry(3, h, 3);
+                const bEdges = new THREE.EdgesGeometry(bGeo);
+                const color = Math.random() > 0.5 ? 0xaa00ff : 0x0088ff;
+                const bMat = new THREE.LineBasicMaterial({ color: color });
                 const mesh = new THREE.LineSegments(bEdges, bMat);
-                mesh.position.set(x, h/2 - 10, z); cityGroup.add(mesh);
+                mesh.position.set(x, h/2 - 10, z);
+                
+                if(Math.random() > 0.7) {
+                    const winGeo = new THREE.BoxGeometry(2.5, h*0.8, 2.5);
+                    const winMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.1 });
+                    const winMesh = new THREE.Mesh(winGeo, winMat);
+                    mesh.add(winMesh);
+                }
+                cityGroup.add(mesh);
             }
             scene.add(cityGroup);
             scene.add(new THREE.AmbientLight(0x404040, 0.8));
@@ -404,12 +439,12 @@
         }
 
         function addSnakePart(x, z) {
-            const geo = new THREE.BoxGeometry(0.85, 0.85, 0.85); // Keep small size for precision
+            const geo = new THREE.BoxGeometry(0.85, 0.85, 0.85); 
             const isHead = snakeData.length === 0;
             const mat = new THREE.MeshStandardMaterial({
                 color: isHead ? 0xffffff : currentThemeColor,
                 emissive: isHead ? 0xffffff : currentThemeColor,
-                emissiveIntensity: isHead ? 1.0 : 0.5, 
+                emissiveIntensity: isHead ? 1.0 : 0.4, 
                 roughness: 0.2, metalness: 0.8
             });
             const mesh = new THREE.Mesh(geo, mat); mesh.position.set(x, 0, z); snakeGroup.add(mesh);
@@ -541,28 +576,21 @@
             wallLines.material.color.copy(currentThemeColor);
             
             const progress = Math.min(moveTimer / effectiveSpeed, 1.0);
-            
-            // [HYBRID GRAPHICS] Phase-dependent snake intensity
             for(let i=0; i<snakeData.length; i++) {
                 const p = snakeData[i];
                 p.mesh.position.x = THREE.MathUtils.lerp(p.prevX, p.currX, progress);
                 p.mesh.position.z = THREE.MathUtils.lerp(p.prevZ, p.currZ, progress);
                 
-                // Keep color sync
                 if(p.mesh.material.emissive) p.mesh.material.emissive.copy(currentThemeColor);
                 if(p.mesh.children.length > 0) p.mesh.children[0].color.copy(currentThemeColor);
 
-                // Intensity Modulation based on Phase
                 const isHead = (i===0);
                 let targetInt;
                 if (gameState.phase === 1) {
-                    // Phase 1: Clean & Sharp (Low Bloom)
                     targetInt = isHead ? 1.0 : 0.4;
                 } else {
-                    // Phase 2+: Full Power Glow
                     targetInt = isHead ? 1.5 : 0.8;
                 }
-                // Smoothly update intensity
                 p.mesh.material.emissiveIntensity = THREE.MathUtils.lerp(p.mesh.material.emissiveIntensity, targetInt, 0.05);
             }
 
@@ -628,13 +656,18 @@
             const head = snakeData[0].mesh;
             const backVec = direction.clone().negate().normalize();
             
-            const targetDist = isBoosting ? 20 : 14; const targetHeight = isBoosting ? 8 : 10; const targetFOV = isBoosting ? 110 : 85;
+            // [WIDE VIEW] Parameters
+            const targetDist = isBoosting ? 25 : 18;  // More dist (was 20/14)
+            const targetHeight = isBoosting ? 12 : 15; // More height (was 8/10)
+            const targetFOV = isBoosting ? 115 : 90;   // Wide FOV
+
             camera.fov = THREE.MathUtils.lerp(camera.fov, targetFOV, 0.05); camera.updateProjectionMatrix();
 
             const targetPos = new THREE.Vector3();
             targetPos.copy(head.position).add(backVec.multiplyScalar(targetDist)).add(new THREE.Vector3(0, targetHeight, 0));
             const lookPos = new THREE.Vector3();
-            lookPos.copy(head.position).add(direction.clone().multiplyScalar(15));
+            // Look further ahead
+            lookPos.copy(head.position).add(direction.clone().multiplyScalar(20));
             if(isBoosting) { targetPos.x += (Math.random()-0.5)*0.2; targetPos.y += (Math.random()-0.5)*0.2; }
             
             camera.position.lerp(targetPos, 0.1);
