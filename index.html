@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Snake: Hyper Wide</title>
+    <title>Neon Snake: Cyber City</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
 
@@ -33,45 +33,46 @@
             letter-spacing: 2px;
             display: flex;
             justify-content: space-between;
+            z-index: 10;
         }
         
         .hud span { color: #00f3ff; }
         .audio-indicator { font-size: 14px; color: #555; animation: pulse 2s infinite; }
-
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; color: #ff0055; } 100% { opacity: 0.5; } }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; color: #b000ff; } 100% { opacity: 0.5; } }
 
         .center-panel {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
-            background: rgba(0, 5, 10, 0.9);
-            border: 1px solid rgba(0, 243, 255, 0.5);
+            background: rgba(10, 0, 20, 0.85);
+            border: 1px solid rgba(180, 0, 255, 0.5);
             padding: 50px 80px;
             pointer-events: auto;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 80px rgba(0, 243, 255, 0.15), inset 0 0 30px rgba(0, 243, 255, 0.1);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 100px rgba(132, 0, 255, 0.2), inset 0 0 30px rgba(100, 0, 255, 0.1);
             z-index: 50;
         }
 
         h1 {
-            font-size: 60px;
+            font-size: 64px;
             margin: 0 0 10px 0;
             font-weight: 800;
             font-style: italic;
-            background: linear-gradient(90deg, #fff, #00f3ff);
+            background: linear-gradient(90deg, #00f3ff, #ff00ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-transform: uppercase;
             letter-spacing: -2px;
+            text-shadow: 0 0 30px rgba(180, 0, 255, 0.5);
         }
 
-        p { color: #8899a6; font-size: 18px; margin-bottom: 40px; letter-spacing: 1px;}
+        p { color: #aaddff; font-size: 18px; margin-bottom: 40px; letter-spacing: 1px;}
 
         .btn {
-            background: rgba(0, 243, 255, 0.1);
-            border: 2px solid #00f3ff;
-            color: #00f3ff;
+            background: rgba(180, 0, 255, 0.1);
+            border: 2px solid #d500ff;
+            color: #d500ff;
             padding: 15px 50px;
             font-size: 24px;
             font-family: inherit;
@@ -81,16 +82,16 @@
             text-transform: uppercase;
             letter-spacing: 3px;
             clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+            box-shadow: 0 0 15px rgba(213, 0, 255, 0.2);
         }
 
         .btn:hover {
-            background: #00f3ff;
-            color: #000;
-            box-shadow: 0 0 40px #00f3ff;
+            background: #d500ff;
+            color: #fff;
+            box-shadow: 0 0 50px #d500ff;
             transform: scale(1.05);
         }
 
-        /* 모바일 컨트롤 영역 */
         #touch-area {
             display: none;
             position: absolute;
@@ -123,20 +124,20 @@
     <div id="ui-layer">
         <div class="hud">
             <div>SCORE: <span id="score">0</span></div>
-            <div class="audio-indicator">AUDIO SYSTEM ONLINE</div>
+            <div class="audio-indicator">🔊 AUDIO ONLINE</div>
         </div>
 
         <div id="start-screen" class="center-panel">
-            <h1>Neon Hyper</h1>
+            <h1>Neon City</h1>
             <p>
-                WIDE FOV // SURROUND SOUND<br>
-                이어폰을 착용하고 시스템에 접속하십시오.
+                HYPER SPEED // CITY LIGHTS<br>
+                이어폰을 착용하고 네온 시티를 질주하십시오.
             </p>
-            <button class="btn" id="btn-start">CONNECT</button>
+            <button class="btn" id="btn-start">DRIVE</button>
         </div>
 
         <div id="game-over-screen" class="center-panel" style="display: none;">
-            <h1 style="background: linear-gradient(90deg, #ff0055, #ff9900); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">DESYNCHRONIZED</h1>
+            <h1 style="background: linear-gradient(90deg, #ff0055, #ff9900); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CRASHED</h1>
             <p>DATA RECOVERED: <span id="final-score" style="color:#fff">0</span></p>
             <button class="btn" id="btn-restart" style="border-color: #ff0055; color: #ff0055;">RETRY</button>
         </div>
@@ -153,29 +154,50 @@
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-        // --- 사운드 엔진 (Synthwave Generator) ---
+        // --- 사운드 엔진 (Synthwave City Edition) ---
         class CyberSynth {
             constructor() {
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 this.masterGain = this.ctx.createGain();
-                this.masterGain.gain.value = 0.4; // 전체 볼륨
+                this.masterGain.gain.value = 0.5;
                 this.masterGain.connect(this.ctx.destination);
                 
                 this.isPlaying = false;
                 this.nextNoteTime = 0;
-                this.tempo = 110;
+                this.tempo = 125; // 약간 더 빠르게
                 this.beatCount = 0;
+
+                // 멜로디 패턴 (Pentatonic-ish)
+                // 0: 쉼표, 숫자: 주파수 배수 혹은 특정 노트 인덱스
+                // 여기선 간단히 주파수 배열로 처리
+                // A Minor scale high pitch sequence
+                const root = 880; // High A
+                // A, C, D, E, G
+                this.melodyNotes = [
+                    880, 0, 1046, 0, 1174, 1318, 0, 1046,
+                    1567, 0, 1318, 0, 1174, 0, 1046, 1174,
+                    880, 880, 0, 1046, 0, 1318, 1174, 0,
+                    1760, 1567, 1318, 1174, 1046, 1174, 1318, 1567
+                ];
             }
 
             resume() {
                 if(this.ctx.state === 'suspended') this.ctx.resume();
                 this.isPlaying = true;
                 this.nextNoteTime = this.ctx.currentTime;
+                // 마스터 볼륨 리셋 (죽었다 살아날 때를 위해)
+                this.masterGain.gain.cancelScheduledValues(this.ctx.currentTime);
+                this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
                 this.scheduler();
             }
 
-            stop() {
+            stopAndFade() {
                 this.isPlaying = false;
+                // 2초 동안 페이드 아웃
+                const t = this.ctx.currentTime;
+                this.masterGain.gain.cancelScheduledValues(t);
+                this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, t);
+                this.masterGain.gain.linearRampToValueAtTime(0, t + 2.0);
             }
 
             scheduler() {
@@ -185,33 +207,66 @@
 
                 while (this.nextNoteTime < this.ctx.currentTime + lookahead) {
                     this.playBeat(this.nextNoteTime, this.beatCount);
-                    this.nextNoteTime += secondsPerBeat / 2; // 8분 음표 단위
+                    this.nextNoteTime += secondsPerBeat / 4; // 16분 음표 단위
                     this.beatCount++;
                 }
                 setTimeout(() => this.scheduler(), 25);
             }
 
             playBeat(time, beat) {
-                const step = beat % 8; // 8 steps pattern
-                
-                // 1. KICK (쿵) - 1, 3, 5, 7 (4/4 정박)
-                if (step % 4 === 0) {
+                const step16 = beat % 16;
+                const step4 = Math.floor(beat / 4) % 4; // 4분음표 기준
+
+                // 1. KICK (쿵) - 정박
+                if (step16 % 4 === 0) {
                     this.playKick(time);
-                    this.playBass(time, step === 0 ? 55 : 65); // Low A, then slightly higher
+                    this.playBass(time, step16 === 0 ? 55 : (step16 === 8 ? 65 : 55));
                 }
                 
-                // 2. SNARE/CLAP (착) - 2.5, 6.5 (엇박 느낌)
-                if (step === 4) {
+                // 2. SNARE (착)
+                if (step16 === 4 || step16 === 12) {
                     this.playSnare(time);
                 }
 
-                // 3. HI-HAT (치칫) - Every step, with volume variation
-                this.playHiHat(time, step % 2 === 0 ? 0.05 : 0.1);
-
-                // 4. DRONE PAD (부웅-) - Loop every 16 beats
-                if (beat % 32 === 0) {
-                    this.playDrone(time);
+                // 3. HI-HAT (치칫) - 16비트 쪼개기
+                if (step16 % 2 === 0) {
+                   this.playHiHat(time, step16 % 4 === 2 ? 0.08 : 0.04);
                 }
+
+                // 4. MAIN MELODY (띠리리링)
+                // 32스텝 패턴 반복
+                const melodyStep = beat % 32;
+                const note = this.melodyNotes[melodyStep];
+                if (note > 0) {
+                    this.playLead(time, note);
+                }
+            }
+
+            playLead(time, freq) {
+                const osc = this.ctx.createOscillator();
+                osc.type = 'square'; // 레트로 게임 느낌
+                
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.Q.value = 5; // 약간의 쇳소리(Resonance)
+
+                const gain = this.ctx.createGain();
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.masterGain);
+
+                osc.frequency.setValueAtTime(freq, time);
+                
+                // 필터 스윕 (Wah 효과)
+                filter.frequency.setValueAtTime(freq * 2, time);
+                filter.frequency.exponentialRampToValueAtTime(freq, time + 0.1);
+
+                gain.gain.setValueAtTime(0.1, time); // 볼륨은 작게 (배경음과 섞이게)
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+
+                osc.start(time);
+                osc.stop(time + 0.15);
             }
 
             playKick(time) {
@@ -219,61 +274,40 @@
                 const gain = this.ctx.createGain();
                 osc.connect(gain);
                 gain.connect(this.masterGain);
-
                 osc.frequency.setValueAtTime(150, time);
                 osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
-                gain.gain.setValueAtTime(1, time);
+                gain.gain.setValueAtTime(0.8, time);
                 gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
-
-                osc.start(time);
-                osc.stop(time + 0.5);
+                osc.start(time); osc.stop(time + 0.5);
             }
 
             playSnare(time) {
-                // Noise buffer
-                const bufferSize = this.ctx.sampleRate * 0.2; // 0.2 sec
+                const bufferSize = this.ctx.sampleRate * 0.2;
                 const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                 const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
                 const noise = this.ctx.createBufferSource();
                 noise.buffer = buffer;
-                
-                const noiseFilter = this.ctx.createBiquadFilter();
-                noiseFilter.type = 'highpass';
-                noiseFilter.frequency.value = 1000;
-
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'highpass'; filter.frequency.value = 800;
                 const gain = this.ctx.createGain();
-                noise.connect(noiseFilter);
-                noiseFilter.connect(gain);
-                gain.connect(this.masterGain);
-
-                gain.gain.setValueAtTime(0.5, time);
+                noise.connect(filter); filter.connect(gain); gain.connect(this.masterGain);
+                gain.gain.setValueAtTime(0.4, time);
                 gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
                 noise.start(time);
             }
 
             playHiHat(time, vol) {
-                // High freq noise
                 const bufferSize = this.ctx.sampleRate * 0.05;
                 const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                 const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
                 const noise = this.ctx.createBufferSource();
                 noise.buffer = buffer;
-                
                 const filter = this.ctx.createBiquadFilter();
-                filter.type = 'highpass';
-                filter.frequency.value = 5000;
-
+                filter.type = 'highpass'; filter.frequency.value = 6000;
                 const gain = this.ctx.createGain();
-                noise.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.masterGain);
-
+                noise.connect(filter); filter.connect(gain); gain.connect(this.masterGain);
                 gain.gain.setValueAtTime(vol, time);
                 gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
                 noise.start(time);
@@ -284,84 +318,38 @@
                 osc.type = 'sawtooth';
                 const filter = this.ctx.createBiquadFilter();
                 filter.type = 'lowpass';
-                
                 const gain = this.ctx.createGain();
-                
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.masterGain);
-
+                osc.connect(filter); filter.connect(gain); gain.connect(this.masterGain);
                 osc.frequency.setValueAtTime(freq, time);
-                // "Womp" effect filter
                 filter.frequency.setValueAtTime(100, time);
-                filter.frequency.exponentialRampToValueAtTime(800, time + 0.1);
-                filter.frequency.exponentialRampToValueAtTime(100, time + 0.3);
-
+                filter.frequency.exponentialRampToValueAtTime(600, time + 0.05);
+                filter.frequency.exponentialRampToValueAtTime(100, time + 0.2);
                 gain.gain.setValueAtTime(0.4, time);
-                gain.gain.linearRampToValueAtTime(0, time + 0.4);
-
-                osc.start(time);
-                osc.stop(time + 0.4);
-            }
-
-            playDrone(time) {
-                // Grand atmosphere pad
-                const osc1 = this.ctx.createOscillator();
-                const osc2 = this.ctx.createOscillator();
-                osc1.type = 'sawtooth';
-                osc2.type = 'sawtooth';
-
-                // Detune for chorus effect
-                osc1.frequency.value = 55; // A1
-                osc2.frequency.value = 55.5; 
-
-                const gain = this.ctx.createGain();
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.value = 400;
-
-                osc1.connect(filter);
-                osc2.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.masterGain);
-
-                gain.gain.setValueAtTime(0, time);
-                gain.gain.linearRampToValueAtTime(0.2, time + 2); // Slow attack
-                gain.gain.linearRampToValueAtTime(0, time + 8); // Long release
-
-                osc1.start(time);
-                osc2.start(time);
-                osc1.stop(time + 8);
-                osc2.stop(time + 8);
+                gain.gain.linearRampToValueAtTime(0, time + 0.3);
+                osc.start(time); osc.stop(time + 0.3);
             }
 
             playEatEffect() {
                 const t = this.ctx.currentTime;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-                osc.connect(gain);
-                gain.connect(this.masterGain);
-                
-                // High pitched bling
-                osc.frequency.setValueAtTime(880, t);
-                osc.frequency.exponentialRampToValueAtTime(1760, t + 0.1);
-                
+                osc.connect(gain); gain.connect(this.masterGain);
+                osc.frequency.setValueAtTime(1200, t);
+                osc.frequency.linearRampToValueAtTime(2000, t + 0.1);
                 gain.gain.setValueAtTime(0.3, t);
                 gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-                
                 osc.start(t); osc.stop(t + 0.1);
             }
         }
 
 
         // --- 게임 설정 ---
-        const GRID_SIZE = 30; // 맵 더 넓힘
-        const TILE_SIZE = 1;
-        const SPEED_BASE = 0.08; // 기본 속도 상향 (0.15 -> 0.08)
+        const GRID_SIZE = 30; 
+        const SPEED_BASE = 0.07; // Very fast
         
         let currentSpeed = SPEED_BASE;
         let scene, camera, renderer, composer;
-        let snakeGroup, foodMesh;
+        let snakeGroup, foodMesh, cityGroup;
         let snakeData = []; 
         let direction = new THREE.Vector3(0, 0, -1);
         let nextDirection = new THREE.Vector3(0, 0, -1);
@@ -374,31 +362,33 @@
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x020205);
-            // 안개 거리 조정 (더 멀리 보이게)
-            scene.fog = new THREE.Fog(0x020205, 20, 90);
+            scene.background = new THREE.Color(0x020005);
+            // 짙은 보라색 안개로 도시와 바닥을 자연스럽게 연결
+            scene.fog = new THREE.FogExp2(0x050010, 0.015);
 
-            // [핵심 변경] 광각 카메라 (FOV 85)
-            camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 200);
+            // Wide FOV
+            camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 300);
             
             renderer = new THREE.WebGLRenderer({ antialias: false });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // Bloom
+            // Bloom Effect (Cyberpunk Glow)
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.strength = 2.0; // 더 강한 빛
-            bloomPass.radius = 0.3;
+            bloomPass.strength = 1.8;
+            bloomPass.radius = 0.5;
             bloomPass.threshold = 0.1;
 
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
 
-            scene.add(new THREE.AmbientLight(0x404040, 0.5));
+            scene.add(new THREE.AmbientLight(0x404040, 0.6));
+            
             createArena();
+            createCity(); // 도시 생성
 
             snakeGroup = new THREE.Group();
             scene.add(snakeGroup);
@@ -411,7 +401,6 @@
             document.getElementById('btn-start').addEventListener('click', startGame);
             document.getElementById('btn-restart').addEventListener('click', startGame);
             
-            // 모바일 터치
             const tLeft = document.getElementById('t-left');
             const tRight = document.getElementById('t-right');
             const handleTouch = (dir) => { if(isPlaying) turn(dir); };
@@ -422,18 +411,63 @@
         }
 
         function createArena() {
-            // 끝없이 펼쳐지는 바닥 느낌
-            const gridHelper = new THREE.GridHelper(GRID_SIZE * 4, GRID_SIZE * 2, 0x1a1a2e, 0x0a0a10);
+            // 무한한 느낌의 바닥
+            const gridHelper = new THREE.GridHelper(GRID_SIZE * 6, GRID_SIZE * 3, 0x8800ff, 0x110022);
             gridHelper.position.y = -0.5;
             scene.add(gridHelper);
 
-            // 경계선 (네온 벽)
-            const geometry = new THREE.BoxGeometry(GRID_SIZE * 2, 4, GRID_SIZE * 2);
+            // 경계선 (밝은 청록색)
+            const geometry = new THREE.BoxGeometry(GRID_SIZE * 2, 2, GRID_SIZE * 2);
             const edges = new THREE.EdgesGeometry(geometry);
-            const material = new THREE.LineBasicMaterial({ color: 0xff0088, linewidth: 2 });
+            const material = new THREE.LineBasicMaterial({ color: 0x00f3ff, linewidth: 2 });
             const walls = new THREE.LineSegments(edges, material);
-            walls.position.y = 1.5;
+            walls.position.y = 0.5;
             scene.add(walls);
+        }
+
+        function createCity() {
+            cityGroup = new THREE.Group();
+            const buildingCount = 200;
+            const minDist = GRID_SIZE * 1.5; // 게임 맵보다 멀리
+            const maxDist = GRID_SIZE * 4;
+
+            for(let i=0; i<buildingCount; i++) {
+                // 랜덤 위치 (도넛 모양 분포)
+                const angle = Math.random() * Math.PI * 2;
+                const dist = minDist + Math.random() * (maxDist - minDist);
+                const x = Math.cos(angle) * dist;
+                const z = Math.sin(angle) * dist;
+                
+                // 랜덤 높이와 두께
+                const h = 10 + Math.random() * 40;
+                const w = 2 + Math.random() * 4;
+                const d = 2 + Math.random() * 4;
+
+                // 빌딩 본체 (검은색)
+                const geometry = new THREE.BoxGeometry(w, h, d);
+                // 네온 엣지 (보라색 또는 파란색 랜덤)
+                const edges = new THREE.EdgesGeometry(geometry);
+                const color = Math.random() > 0.5 ? 0xaa00ff : 0x0088ff; // Purple or Blue
+                const material = new THREE.LineBasicMaterial({ color: color });
+                
+                const building = new THREE.LineSegments(edges, material);
+                building.position.set(x, h/2 - 5, z); // 약간 아래로 내려서 바닥에 묻히게
+                
+                // 가끔 창문처럼 빛나는 박스 추가
+                if(Math.random() > 0.7) {
+                    const winGeo = new THREE.BoxGeometry(w*0.8, h*0.8, d*0.8);
+                    const winMat = new THREE.MeshBasicMaterial({ 
+                        color: color, 
+                        transparent: true, 
+                        opacity: 0.1 
+                    });
+                    const winMesh = new THREE.Mesh(winGeo, winMat);
+                    building.add(winMesh);
+                }
+
+                cityGroup.add(building);
+            }
+            scene.add(cityGroup);
         }
 
         function startGame() {
@@ -448,11 +482,8 @@
             while(snakeGroup.children.length > 0) snakeGroup.remove(snakeGroup.children[0]);
             snakeData = [];
             
-            addSnakePart(0, 0); 
-            addSnakePart(0, 1); 
-            addSnakePart(0, 2); 
-            addSnakePart(0, 3); 
-            addSnakePart(0, 4); // 좀 더 길게 시작
+            // 시작 길이
+            for(let i=0; i<6; i++) addSnakePart(0, i);
 
             direction.set(0, 0, -1);
             nextDirection.copy(direction);
@@ -469,16 +500,16 @@
             const isHead = snakeData.length === 0;
             const material = new THREE.MeshStandardMaterial({
                 color: isHead ? 0xffffff : 0x00f3ff,
-                emissive: isHead ? 0xffffff : 0x0088ff,
-                emissiveIntensity: isHead ? 1.0 : 0.8,
+                emissive: isHead ? 0xffffff : 0x0044ff,
+                emissiveIntensity: isHead ? 1.0 : 0.5,
+                roughness: 0.1, metalness: 0.8
             });
             const mesh = new THREE.Mesh(geometry, material);
             mesh.position.set(x, 0, z);
             snakeGroup.add(mesh);
             
             if (isHead) {
-                // 헤드라이트 거리 증가
-                const light = new THREE.PointLight(0x00f3ff, 5, 40); 
+                const light = new THREE.PointLight(0x00f3ff, 4, 30); 
                 light.position.y = 2;
                 mesh.add(light);
             }
@@ -495,13 +526,16 @@
                 for(let p of snakeData) if(Math.round(p.currX) === x && Math.round(p.currZ) === z) valid = false;
             }
 
-            // 먹이 디자인 변경 (떠있는 피라미드)
-            const geometry = new THREE.ConeGeometry(0.5, 1, 4);
+            const geometry = new THREE.OctahedronGeometry(0.6, 0);
             const material = new THREE.MeshStandardMaterial({
-                color: 0xff9900, emissive: 0xff5500, emissiveIntensity: 3.0
+                color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 2.0
             });
             foodMesh = new THREE.Mesh(geometry, material);
             foodMesh.position.set(x, 0.5, z);
+            
+            const light = new THREE.PointLight(0xff00ff, 2, 5);
+            foodMesh.add(light);
+            
             scene.add(foodMesh);
         }
 
@@ -520,7 +554,12 @@
         }
 
         function update(delta) {
-            if (!isPlaying) return;
+            if (!isPlaying) {
+                // 게임 오버 상태에서도 도시는 천천히 회전
+                if(cityGroup) cityGroup.rotation.y += delta * 0.05;
+                return;
+            }
+            
             moveTimer += delta;
             
             if (moveTimer >= currentSpeed) {
@@ -536,8 +575,8 @@
             updateCamera(progress);
 
             if(foodMesh) {
-                foodMesh.rotation.y += delta * 5;
-                foodMesh.position.y = 0.5 + Math.sin(performance.now() * 0.01) * 0.3;
+                foodMesh.rotation.y += delta * 4;
+                foodMesh.position.y = 0.5 + Math.sin(performance.now() * 0.008) * 0.2;
             }
         }
 
@@ -561,7 +600,7 @@
                 updateUI();
                 soundEngine.playEatEffect();
                 spawnFood();
-                currentSpeed = Math.max(0.04, currentSpeed * 0.98); // 속도 제한선 설정
+                currentSpeed = Math.max(0.035, currentSpeed * 0.99); 
             }
 
             if (ate) {
@@ -583,36 +622,28 @@
             if (snakeData.length === 0) return;
             const head = snakeData[0].mesh;
             
-            // [핵심 변경] 카메라 거리와 각도 조절
-            // 이전보다 훨씬 뒤(16)에서, 조금 더 높게(12) 
+            // 카메라가 뱀을 더 다이내믹하게 따라감
             const backVec = direction.clone().negate().normalize();
             const targetPos = new THREE.Vector3();
-            // dist: 16 (멀리), height: 12 (위에서)
-            targetPos.copy(head.position).add(backVec.multiplyScalar(16)).add(new THREE.Vector3(0, 12, 0));
+            // Distance 14, Height 10
+            targetPos.copy(head.position).add(backVec.multiplyScalar(14)).add(new THREE.Vector3(0, 10, 0));
             
-            // 카메라는 머리보다 훨씬 앞을 내다봄 (LookAhead: 15)
             const lookPos = new THREE.Vector3();
-            lookPos.copy(head.position).add(direction.clone().multiplyScalar(15));
+            lookPos.copy(head.position).add(direction.clone().multiplyScalar(12));
 
-            // Lerp 속도를 낮춰서(0.08) 카메라가 더 부드럽게 '끌려오는' 느낌 (드리프트감)
-            camera.position.lerp(targetPos, 0.08);
+            camera.position.lerp(targetPos, 0.1); // 부드러움 조절
             camera.lookAt(lookPos);
         }
 
         function gameOver() {
             isPlaying = false;
-            soundEngine.stop();
-            // 게임오버 사운드 (간단한 노이즈)
-            const t = soundEngine.ctx.currentTime;
-            const osc = soundEngine.ctx.createOscillator();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(100, t);
-            osc.frequency.exponentialRampToValueAtTime(10, t+1);
-            const gain = soundEngine.ctx.createGain();
-            gain.gain.setValueAtTime(0.5, t);
-            gain.gain.linearRampToValueAtTime(0, t+1);
-            osc.connect(gain); gain.connect(soundEngine.ctx.destination);
-            osc.start(t); osc.stop(t+1);
+            soundEngine.stopAndFade(); // 음악 페이드 아웃
+
+            // 뱀 색깔 붉게 변함
+            snakeData.forEach(p => {
+                p.mesh.material.color.setHex(0xff0000);
+                p.mesh.material.emissive.setHex(0xff0000);
+            });
 
             document.getElementById('final-score').innerText = score;
             document.getElementById('game-over-screen').style.display = 'block';
